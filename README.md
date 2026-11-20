@@ -78,6 +78,6 @@ The end-to-end test generates a WAV (silence, a scream, then shout/pause bursts)
 
 ## Deploy
 
-`.github/workflows/pages.yml` publishes the game to GitHub Pages on every push to `main`. One-time setup: in the repository go to **Settings → Pages** and set **Source** to **GitHub Actions**. Pages serves over HTTPS, so the microphone works there.
+`.github/workflows/pages.yml` publishes the game to GitHub Pages on every push to the default branch. One-time setup: in the repository go to **Settings → Pages** and set **Source** to **GitHub Actions**. Pages serves over HTTPS, so the microphone works there.
 
 `.github/workflows/ci.yml` runs the unit and end-to-end tests on every push and pull request.
