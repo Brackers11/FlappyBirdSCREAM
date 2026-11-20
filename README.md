@@ -28,7 +28,7 @@ Add `?debug` to the URL to see live dB readings (noise floor, gate, peak, level)
 
 | Mode | How it works |
 |---|---|
-| **Scream** (default) | Hold a sound to rise. Volume sets how hard you climb; silence lets gravity win. About half volume hovers. |
+| **Scream** (default) | Hold a sound to rise. Volume sets how hard you climb; silence lets gravity win. A bit over half volume hovers. |
 | **Classic** | Each short shout is one flap. A long "AAAH" is one flap, not twenty. |
 
 Open **Settings** (gear button or `Esc`) to switch mode, change sensitivity, show or hide the volume meter, turn on sound effects, or recalibrate. The best score is saved separately for each mode.
