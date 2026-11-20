@@ -1,0 +1,12 @@
+{
+  "name": "scream-bird",
+  "version": "1.0.0",
+  "description": "A side-scrolling flying game controlled only by your voice.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test \"tests/unit/*.test.js\"",
+    "test:e2e": "node --test \"tests/e2e/*.test.mjs\""
+  }
+}

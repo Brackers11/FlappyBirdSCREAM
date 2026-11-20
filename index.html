@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="A side-scrolling flying game you control only with your voice." />
+    <meta name="theme-color" content="#1a0b3d" />
+    <title>Scream Bird</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='30' cy='34' r='22' fill='%233ee0c5'/%3E%3Cpath d='M44 34 62 26 62 44Z' fill='%23ffb02e'/%3E%3Ccircle cx='36' cy='26' r='7' fill='%23fff'/%3E%3Ccircle cx='38' cy='26' r='3' fill='%231a0b3d'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="game" role="img" aria-label="Scream Bird game. Make noise to fly up, go quiet to fall."></canvas>
+
+      <button id="settings-btn" class="icon-btn" type="button" aria-label="Settings" title="Settings (Esc)">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.7 7.7 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.7 7.7 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.8 1.7 1l.4 2.6h4l.4-2.6c.6-.2 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" transform="translate(-1 0)"/>
+        </svg>
+      </button>
+
+      <section id="boot" class="overlay" aria-labelledby="boot-title">
+        <div class="card">
+          <h1 id="boot-title">Scream Bird</h1>
+          <p class="lead">A flying game you play with your voice. No keys, no taps.</p>
+          <ol class="how">
+            <li><strong>Make noise</strong> to fly up. Louder is higher.</li>
+            <li><strong>Go quiet</strong> to fall.</li>
+            <li>Fly through the gaps between the crystal pillars.</li>
+          </ol>
+          <button id="enable-mic" class="primary" type="button">Enable microphone</button>
+          <p class="hint">This is the only click. After a 5-second calibration, starting, playing and restarting are all done with your voice.</p>
+          <p id="boot-error" class="error" role="alert" hidden></p>
+        </div>
+      </section>
+
+      <section id="settings" class="overlay" hidden aria-labelledby="settings-title">
+        <form id="settings-form" class="card">
+          <h2 id="settings-title">Settings</h2>
+
+          <fieldset>
+            <legend>Control mode</legend>
+            <label class="choice">
+              <input type="radio" name="mode" value="scream" />
+              <span><strong>Scream</strong> – hold a sound to rise. Volume sets how hard you climb.</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="mode" value="classic" />
+              <span><strong>Classic</strong> – each short shout is one flap.</span>
+            </label>
+          </fieldset>
+
+          <label class="field">
+            <span>Sensitivity <output id="sensitivity-value">1.00×</output></span>
+            <input type="range" name="sensitivity" min="0.5" max="2" step="0.05" />
+            <small>Raise it if you have to strain; lower it if background noise moves the bird.</small>
+          </label>
+
+          <label class="toggle">
+            <input type="checkbox" name="showMeter" />
+            <span>Show volume meter</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" name="sfx" />
+            <span>Sound effects <small>(use headphones, or the speakers will move the bird)</small></span>
+          </label>
+
+          <div class="actions">
+            <button id="recalibrate" type="button" disabled>Recalibrate mic</button>
+            <button id="close-settings" class="primary" type="button">Done</button>
+          </div>
+        </form>
+      </section>
+    </main>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
