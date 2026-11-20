@@ -102,6 +102,15 @@ export function drawPaused(ctx) {
   text(ctx, 'Paused', CX, 345, { size: 30 });
 }
 
+export function drawNoSignal(ctx, seconds) {
+  panel(ctx, 520, 120);
+  text(ctx, 'No sound from the microphone', CX, 550, { size: 20, color: COLORS.grid });
+  text(ctx, 'Tap the screen to wake it up.', CX, 582, { size: 16, weight: 'normal' });
+  if (seconds > 6) {
+    text(ctx, 'Still stuck? Reload and allow mic access.', CX, 608, { size: 13, weight: 'normal' });
+  }
+}
+
 export function drawDebug(ctx, voice, fps) {
   const lines = [
     `env ${voice.envDb.toFixed(1)} dB`,

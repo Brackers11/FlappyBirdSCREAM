@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { startServer } from '../../scripts/serve.mjs';
-import { writeFakeScream } from './fake-scream.mjs';
+import { writeFakeScream, writeDeadMic } from './fake-scream.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
@@ -92,4 +92,27 @@ test('voice alone calibrates, starts, flies, dies and restarts', { timeout: 90_0
   await waitForPhase(page, 'playing', 10000);
   assert.deepEqual(errors, []);
   await context.close();
+});
+
+test('a microphone that delivers no sound shows a warning instead of calibrating', { timeout: 30_000 }, async () => {
+  const wav = join(workDir, 'dead.wav');
+  writeDeadMic(wav);
+  const deadBrowser = await chromium.launch({
+    args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', `--use-file-for-fake-audio-capture=${wav}`],
+  });
+  try {
+    const context = await deadBrowser.newContext({ viewport: { width: 520, height: 760 } });
+    await context.grantPermissions(['microphone'], { origin: `http://localhost:${PORT}` });
+    const page = await context.newPage();
+    await page.goto(`http://localhost:${PORT}/`);
+    await page.click('#enable-mic');
+    await page.waitForFunction(() => window.__screamBird.noSignal === true, null, { timeout: 5000, polling: 50 });
+    // Calibration must not complete on dead air.
+    await page.waitForTimeout(3000);
+    assert.equal(await page.evaluate(() => window.__screamBird.phase), 'calibrating');
+    assert.equal(await page.evaluate(() => window.__screamBird.calibration), null);
+    await shot(page, '6-no-signal');
+  } finally {
+    await deadBrowser.close();
+  }
 });

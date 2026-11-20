@@ -21,6 +21,7 @@ import {
   drawCountdown,
   drawPaused,
   drawDebug,
+  drawNoSignal,
 } from './ui/screens.js';
 import { loadSettings, saveSettings, loadBest, saveBest } from './ui/storage.js';
 
@@ -28,6 +29,10 @@ const STEP = 1 / 120; // fixed physics step
 const READY_DELAY = 0.4; // ignore noise right after the ready screen appears
 const RESTART_LOCKOUT = 1.0; // a dying scream shouldn't instantly restart
 const CALIBRATION_HOLD = 1.0; // show "Got it!" this long
+// A working mic always picks up some hiss. Perfect digital silence for this
+// long means audio isn't reaching the game (usually a sleeping AudioContext).
+const DEAD_AIR_DB = -95;
+const DEAD_AIR_SECONDS = 1.5;
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -69,7 +74,10 @@ const game = {
   countdown: 0,
   input: { level: 0, flap: false, active: false, db: -100 },
   fps: 60,
+  deadAir: 0,
 };
+
+const noSignal = () => Boolean(mic) && game.deadAir > DEAD_AIR_SECONDS;
 
 const mode = () => MODES[settings.mode];
 
@@ -190,7 +198,11 @@ function update(dt) {
   switch (game.phase) {
     case 'calibrating': {
       const cal = game.calibrator;
-      if (cal.phase !== 'done') {
+      if (cal.phase !== 'done' && noSignal()) {
+        // Measuring silence from a dead input would ruin calibration;
+        // start over once sound arrives.
+        game.calibrator = new Calibrator();
+      } else if (cal.phase !== 'done') {
         cal.update(input.db, dt);
         if (cal.phase === 'done') voice.setCalibration(cal.result.floorDb, cal.result.peakDb);
       } else if (cal.time >= CALIBRATION_HOLD) {
@@ -286,6 +298,7 @@ function render() {
       break;
   }
   if (game.paused && game.phase !== 'boot') drawPaused(ctx);
+  if (noSignal() && !game.paused) drawNoSignal(ctx, game.deadAir);
   if (mic && settings.showMeter) drawMeter(ctx, voice);
   if (debug && mic) drawDebug(ctx, voice, game.fps);
 }
@@ -299,6 +312,7 @@ function frame(now) {
   if (mic && dt > 0) {
     const db = mic.readDb();
     game.input = { ...voice.update(db, dt), db };
+    game.deadAir = db <= DEAD_AIR_DB || !mic.running ? game.deadAir + dt : 0;
   } else {
     game.input = { level: 0, flap: false, active: false, db: -100 };
   }
@@ -411,6 +425,11 @@ recalibrateBtn.addEventListener('click', () => {
   startCalibration();
 });
 
+// Browsers only let audio wake up from a tap, so any tap on the game tries.
+canvas.addEventListener('pointerdown', () => {
+  if (mic) mic.wake();
+});
+
 // Pausing on tab switch: browsers stop animation frames anyway; give the
 // player a moment when they come back mid-run.
 document.addEventListener('visibilitychange', () => {
@@ -434,6 +453,9 @@ if (navigator.webdriver || debug) {
     },
     get calibration() {
       return game.calibrator && game.calibrator.result;
+    },
+    get noSignal() {
+      return noSignal();
     },
     voice,
   };

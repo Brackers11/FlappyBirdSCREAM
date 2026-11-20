@@ -29,8 +29,10 @@ export async function openMic({ onEnded } = {}) {
     throw Object.assign(new Error('This browser does not support microphone input.'), { name: 'Unsupported' });
   }
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
-  // Created before the await so it still counts as part of the click (Safari).
+  // Created and woken before any await, while the click still counts as a
+  // user gesture. Phones (iOS especially) keep it asleep otherwise.
   const context = new AudioCtx();
+  const resuming = context.resume().catch(() => {});
 
   let stream;
   try {
@@ -49,14 +51,22 @@ export async function openMic({ onEnded } = {}) {
     throw err;
   }
 
-  if (context.state === 'suspended') await context.resume();
-
   const source = context.createMediaStreamSource(stream);
   const analyser = context.createAnalyser();
   analyser.fftSize = 1024; // ~21 ms of audio at 48 kHz
   analyser.smoothingTimeConstant = 0;
+  // Safari only processes nodes that lead to the speakers, so route the
+  // analyser there through a muted gain. Nothing is audible.
+  const mute = context.createGain();
+  mute.gain.value = 0;
   source.connect(analyser);
+  analyser.connect(mute);
+  mute.connect(context.destination);
   const buffer = new Float32Array(analyser.fftSize);
+
+  // Never hang here: if waking needs another tap, the game asks for one.
+  await Promise.race([resuming, new Promise((r) => setTimeout(r, 1000))]);
+  if (context.state !== 'running') context.resume().catch(() => {});
 
   const [track] = stream.getAudioTracks();
   if (track && onEnded) track.addEventListener('ended', onEnded);
@@ -64,6 +74,13 @@ export async function openMic({ onEnded } = {}) {
   return {
     context,
     label: track ? track.label : '',
+    get running() {
+      return context.state === 'running';
+    },
+    /** Must be called from a tap or click. */
+    wake() {
+      return context.resume().catch(() => {});
+    },
     readDb() {
       analyser.getFloatTimeDomainData(buffer);
       return frameDb(buffer);

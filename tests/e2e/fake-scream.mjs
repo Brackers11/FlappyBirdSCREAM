@@ -22,6 +22,29 @@ export function screamTimeline(seconds = 40) {
   return segments;
 }
 
+/** A "dead" microphone: perfect digital silence. */
+export function writeDeadMic(path, seconds = 5) {
+  writeWav(path, new Int16Array(Math.floor(RATE * seconds)));
+}
+
+function writeWav(path, pcm) {
+  const header = Buffer.alloc(44);
+  header.write('RIFF', 0);
+  header.writeUInt32LE(36 + pcm.byteLength, 4);
+  header.write('WAVE', 8);
+  header.write('fmt ', 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20); // PCM
+  header.writeUInt16LE(1, 22); // mono
+  header.writeUInt32LE(RATE, 24);
+  header.writeUInt32LE(RATE * 2, 28);
+  header.writeUInt16LE(2, 32);
+  header.writeUInt16LE(16, 34);
+  header.write('data', 36);
+  header.writeUInt32LE(pcm.byteLength, 40);
+  writeFileSync(path, Buffer.concat([header, Buffer.from(pcm.buffer)]));
+}
+
 export function writeFakeScream(path, seconds = 40) {
   const n = Math.floor(RATE * seconds);
   const pcm = new Int16Array(n);
@@ -43,20 +66,5 @@ export function writeFakeScream(path, seconds = 40) {
     }
     pcm[i] = Math.max(-32768, Math.min(32767, Math.round(v * 32767)));
   }
-
-  const header = Buffer.alloc(44);
-  header.write('RIFF', 0);
-  header.writeUInt32LE(36 + pcm.byteLength, 4);
-  header.write('WAVE', 8);
-  header.write('fmt ', 12);
-  header.writeUInt32LE(16, 16);
-  header.writeUInt16LE(1, 20); // PCM
-  header.writeUInt16LE(1, 22); // mono
-  header.writeUInt32LE(RATE, 24);
-  header.writeUInt32LE(RATE * 2, 28);
-  header.writeUInt16LE(2, 32);
-  header.writeUInt16LE(16, 34);
-  header.write('data', 36);
-  header.writeUInt32LE(pcm.byteLength, 40);
-  writeFileSync(path, Buffer.concat([header, Buffer.from(pcm.buffer)]));
+  writeWav(path, pcm);
 }
