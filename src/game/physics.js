@@ -13,12 +13,12 @@ export const BIRD_X = 140;
 
 /** Tuning per control mode. */
 export const MODES = {
-  // Hold a sound to rise; volume sets the push. Hovers at a level of ~0.44.
+  // Hold a sound to rise; volume sets the push. Hovers at a level of 0.5.
   scream: {
     gravity: 1500,
-    thrust: 3400,
+    thrust: 3000,
     maxFall: 620,
-    maxRise: 520,
+    maxRise: 430,
     gapStart: 235,
     gapMin: 170,
     speedStart: 160,
@@ -29,7 +29,7 @@ export const MODES = {
   // Each burst of sound is one flap.
   classic: {
     gravity: 1700,
-    flapVelocity: 520,
+    flapVelocity: 460,
     maxFall: 700,
     maxRise: 700,
     gapStart: 210,
