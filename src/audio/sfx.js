@@ -1,11 +1,13 @@
 // Tiny synthesized sound effects. Off by default: with echo cancellation
 // disabled, speaker output leaks into the microphone and would move the bird.
 
-export function createSfx(context) {
+/** @param getContext returns the current AudioContext (it can be rebuilt). */
+export function createSfx(getContext) {
   let enabled = false;
 
   function blip(freq, duration, { type = 'square', volume = 0.08, slideTo = null } = {}) {
-    if (!enabled || !context) return;
+    const context = getContext();
+    if (!enabled || !context || context.state === 'closed') return;
     const now = context.currentTime;
     const osc = context.createOscillator();
     const gain = context.createGain();

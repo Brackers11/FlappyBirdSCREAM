@@ -104,6 +104,8 @@ test('a microphone that delivers no sound shows a warning instead of calibrating
     const context = await deadBrowser.newContext({ viewport: { width: 520, height: 760 } });
     await context.grantPermissions(['microphone'], { origin: `http://localhost:${PORT}` });
     const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(`http://localhost:${PORT}/`);
     await page.click('#enable-mic');
     await page.waitForFunction(() => window.__screamBird.noSignal === true, null, { timeout: 5000, polling: 50 });
@@ -112,6 +114,14 @@ test('a microphone that delivers no sound shows a warning instead of calibrating
     assert.equal(await page.evaluate(() => window.__screamBird.phase), 'calibrating');
     assert.equal(await page.evaluate(() => window.__screamBird.calibration), null);
     await shot(page, '6-no-signal');
+
+    // Tapping rebuilds the audio from scratch; it must come back up cleanly.
+    await page.click('#game');
+    await page.waitForTimeout(800);
+    const diag = await page.evaluate(() => window.__screamBird.diagnostics);
+    assert.equal(diag.audio, 'running');
+    assert.equal(diag.mic, 'live');
+    assert.deepEqual(errors, []);
   } finally {
     await deadBrowser.close();
   }

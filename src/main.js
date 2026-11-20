@@ -52,7 +52,7 @@ const debug = params.has('debug');
 const settings = loadSettings();
 const voice = new VoiceProcessor({ sensitivity: settings.sensitivity });
 let mic = null;
-let sfx = createSfx(null);
+let sfx = createSfx(() => null);
 
 const game = {
   phase: 'boot', // boot | calibrating | ready | playing | dead
@@ -298,7 +298,7 @@ function render() {
       break;
   }
   if (game.paused && game.phase !== 'boot') drawPaused(ctx);
-  if (noSignal() && !game.paused) drawNoSignal(ctx, game.deadAir);
+  if (noSignal() && !game.paused) drawNoSignal(ctx, game.deadAir, mic.diagnostics);
   if (mic && settings.showMeter) drawMeter(ctx, voice);
   if (debug && mic) drawDebug(ctx, voice, game.fps);
 }
@@ -357,7 +357,7 @@ enableBtn.addEventListener('click', async () => {
         showBootError('The microphone disconnected. Reconnect it and try again.');
       },
     });
-    sfx = createSfx(mic.context);
+    sfx = createSfx(() => mic && mic.context);
     sfx.enabled = settings.sfx;
     bootEl.hidden = true;
     recalibrateBtn.disabled = false;
@@ -426,8 +426,9 @@ recalibrateBtn.addEventListener('click', () => {
 });
 
 // Browsers only let audio wake up from a tap, so any tap on the game tries.
+// With no sound arriving, the tap rebuilds the audio from scratch.
 canvas.addEventListener('pointerdown', () => {
-  if (mic) mic.wake();
+  if (mic) mic.wake({ rebuild: noSignal() });
 });
 
 // Pausing on tab switch: browsers stop animation frames anyway; give the
@@ -456,6 +457,12 @@ if (navigator.webdriver || debug) {
     },
     get noSignal() {
       return noSignal();
+    },
+    get diagnostics() {
+      return mic && mic.diagnostics;
+    },
+    rebuildAudio() {
+      return mic && mic.wake({ rebuild: true });
     },
     voice,
   };

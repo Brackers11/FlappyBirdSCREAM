@@ -102,12 +102,19 @@ export function drawPaused(ctx) {
   text(ctx, 'Paused', CX, 345, { size: 30 });
 }
 
-export function drawNoSignal(ctx, seconds) {
-  panel(ctx, 520, 120);
-  text(ctx, 'No sound from the microphone', CX, 550, { size: 20, color: COLORS.grid });
-  text(ctx, 'Tap the screen to wake it up.', CX, 582, { size: 16, weight: 'normal' });
-  if (seconds > 6) {
-    text(ctx, 'Still stuck? Reload and allow mic access.', CX, 608, { size: 13, weight: 'normal' });
+export function drawNoSignal(ctx, seconds, diag) {
+  panel(ctx, 470, 175);
+  text(ctx, 'No sound from the microphone', CX, 498, { size: 20, color: COLORS.grid });
+  text(ctx, 'Tap the screen to restart the audio.', CX, 528, { size: 16, weight: 'normal' });
+  text(ctx, 'Opened from a chat or social app? Open the', CX, 556, { size: 13, weight: 'normal' });
+  text(ctx, 'link in Safari or Chrome instead.', CX, 574, { size: 13, weight: 'normal' });
+  if (seconds > 6) text(ctx, 'Still stuck? Reload and allow mic access.', CX, 596, { size: 13, weight: 'normal' });
+  if (diag) {
+    text(ctx, `audio ${diag.audio} · mic ${diag.mic} · ${diag.sampleRate} Hz`, CX, 625, {
+      size: 12,
+      weight: 'normal',
+      color: COLORS.belly,
+    });
   }
 }
 
