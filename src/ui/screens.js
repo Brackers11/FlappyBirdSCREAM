@@ -67,14 +67,26 @@ export function drawReady(ctx, mode, best, t) {
   text(ctx, 'Make some noise to start', CX, 440, { size: 24 * pulse });
   if (mode === 'scream') {
     text(ctx, 'Louder = higher. Silence = fall.', CX, 480, { size: 16, weight: 'normal' });
+  } else if (mode === 'plank') {
+    text(ctx, 'Plank mode: one shout = one flap.', CX, 470, { size: 16, weight: 'normal' });
+    text(ctx, 'Pass 10 pillars to WIN.', CX, 492, { size: 16, color: COLORS.columnEdge });
   } else {
     text(ctx, 'Classic mode: each shout is one flap.', CX, 480, { size: 16, weight: 'normal' });
   }
   if (best > 0) text(ctx, `Best: ${best}`, CX, 515, { size: 16, color: COLORS.belly });
 }
 
-export function drawScore(ctx, score) {
-  text(ctx, String(score), CX, 70, { size: 56 });
+export function drawScore(ctx, score, target) {
+  text(ctx, target ? `${score} / ${target}` : String(score), CX, 70, { size: 56 });
+}
+
+export function drawWin(ctx, { score, t }) {
+  panel(ctx, 180, 320);
+  const pulse = 1 + 0.08 * Math.sin(t * 8);
+  text(ctx, 'YOU WIN!', CX, 250, { size: 52 * pulse, color: COLORS.beak });
+  text(ctx, `${score} pillars cleared`, CX, 310, { size: 24 });
+  text(ctx, 'You can stop planking now.', CX, 360, { size: 20, color: COLORS.columnEdge });
+  text(ctx, 'Tap the screen to play again.', CX, 440, { size: 15, weight: 'normal' });
 }
 
 export function drawGameOver(ctx, { score, best, newBest, canRestart, stillLoud, t }) {

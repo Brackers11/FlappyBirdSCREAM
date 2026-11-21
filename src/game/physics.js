@@ -39,6 +39,21 @@ export const MODES = {
     spacing: 270,
     maxGapShift: 220,
   },
+  // Plank challenge: one shout = one flap, slow sink, wide gaps, no ramp,
+  // and a finish line. Built to be beatable on a tired, shaky voice.
+  plank: {
+    gravity: 1100,
+    flapVelocity: 380,
+    maxFall: 450,
+    maxRise: 700,
+    gapStart: 300,
+    gapMin: 300,
+    speedStart: 130,
+    speedMax: 130,
+    spacing: 380,
+    maxGapShift: 90,
+    winScore: 10,
+  },
 };
 
 export const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));

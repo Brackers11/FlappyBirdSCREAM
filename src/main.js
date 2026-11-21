@@ -18,6 +18,7 @@ import {
   drawReady,
   drawScore,
   drawGameOver,
+  drawWin,
   drawCountdown,
   drawPaused,
   drawDebug,
@@ -50,12 +51,14 @@ const params = new URLSearchParams(location.search);
 const debug = params.has('debug');
 
 const settings = loadSettings();
+// ?mode=plank (or scream/classic) picks the mode from the link itself.
+if (MODES[params.get('mode')]) settings.mode = params.get('mode');
 const voice = new VoiceProcessor({ sensitivity: settings.sensitivity });
 let mic = null;
 let sfx = createSfx(() => null);
 
 const game = {
-  phase: 'boot', // boot | calibrating | ready | playing | dead
+  phase: 'boot', // boot | calibrating | ready | playing | dead | won
   phaseTime: 0,
   time: 0,
   calibrator: null,
@@ -136,6 +139,31 @@ function die() {
   setPhase('dead');
 }
 
+function win() {
+  if (game.score > game.best) {
+    game.best = game.score;
+    saveBest(settings.mode, game.best);
+  }
+  for (let i = 0; i < 40; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = 120 + Math.random() * 260;
+    game.particles.push({
+      kind: 'feather',
+      x: WORLD.width / 2,
+      y: WORLD.playHeight * 0.4,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 150,
+      rot: a,
+      vr: (Math.random() - 0.5) * 10,
+      age: 0,
+      life: 1.5 + Math.random(),
+      color: [COLORS.beak, COLORS.columnEdge, COLORS.belly][i % 3],
+    });
+  }
+  sfx.score();
+  setPhase('won');
+}
+
 function spawnRings(dt) {
   const level = game.input.level;
   if (level < 0.3 || !game.bird.alive) return;
@@ -169,13 +197,17 @@ function stepPlaying(dt) {
     game.accumulator -= STEP;
     const flap = game.pendingFlap;
     game.pendingFlap = false;
-    if (flap && settings.mode === 'classic') game.bird.wing += Math.PI;
+    if (flap && !mode().thrust) game.bird.wing += Math.PI;
     const hitGround = stepBird(game.bird, { level: game.input.level, flap }, mode(), STEP);
     game.scroll += game.obstacles.update(STEP, game.score);
     const passed = game.obstacles.collectPassed(game.bird.x);
     if (passed) {
       game.score += passed;
       sfx.score();
+      if (mode().winScore && game.score >= mode().winScore) {
+        win();
+        return;
+      }
     }
     if (hitGround || game.obstacles.hits(game.bird)) {
       die();
@@ -241,6 +273,18 @@ function update(dt) {
       if (game.phase === 'playing' && input.level > 0.85) game.shake = Math.max(game.shake, (input.level - 0.85) * 25);
       break;
 
+    case 'won': {
+      // Celebration screams must not restart the run: only a tap does.
+      const bird = game.bird;
+      bird.y += (WORLD.playHeight * 0.45 + Math.sin(game.time * 3) * 10 - bird.y) * Math.min(1, dt * 3);
+      bird.vy = 0;
+      bird.angle = 0;
+      bird.wing += dt * 20;
+      game.scroll += game.obstacles.speed * dt;
+      game.pendingFlap = false;
+      break;
+    }
+
     case 'dead':
       stepBird(game.bird, { level: 0, flap: false }, mode(), dt);
       if (game.phaseTime > RESTART_LOCKOUT && input.flap) {
@@ -278,11 +322,14 @@ function render() {
       drawReady(ctx, settings.mode, game.best, game.time);
       break;
     case 'playing':
-      drawScore(ctx, game.score);
+      drawScore(ctx, game.score, mode().winScore);
       if (game.countdown > 0 && !game.paused) drawCountdown(ctx, game.countdown);
       break;
+    case 'won':
+      drawWin(ctx, { score: game.score, t: game.time });
+      break;
     case 'dead':
-      drawScore(ctx, game.score);
+      drawScore(ctx, game.score, mode().winScore);
       if (game.phaseTime > 0.5) {
         drawGameOver(ctx, {
           score: game.score,
@@ -361,6 +408,7 @@ enableBtn.addEventListener('click', async () => {
     sfx.enabled = settings.sfx;
     bootEl.hidden = true;
     recalibrateBtn.disabled = false;
+    keepAwake();
     startCalibration();
   } catch (err) {
     showBootError(micErrorMessage(err));
@@ -429,11 +477,26 @@ recalibrateBtn.addEventListener('click', () => {
 // With no sound arriving, the tap rebuilds the audio from scratch.
 canvas.addEventListener('pointerdown', () => {
   if (mic) mic.wake({ rebuild: noSignal() });
+  if (game.phase === 'won' && game.phaseTime > 2) goReady();
 });
+
+// Keep the phone screen on while playing: nobody can tap it mid-plank.
+let wakeLock = null;
+async function keepAwake() {
+  try {
+    if ('wakeLock' in navigator && !document.hidden && !wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => (wakeLock = null));
+    }
+  } catch {
+    /* not supported or refused: the screen may dim */
+  }
+}
 
 // Pausing on tab switch: browsers stop animation frames anyway; give the
 // player a moment when they come back mid-run.
 document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && mic) keepAwake();
   if (!document.hidden && game.phase === 'playing') game.countdown = 1.5;
 });
 

@@ -4,7 +4,7 @@
 const PREFIX = 'screamBird.';
 
 export const DEFAULT_SETTINGS = {
-  mode: 'scream',
+  mode: 'plank',
   sensitivity: 1,
   sfx: false,
   showMeter: true,
@@ -30,7 +30,7 @@ function write(key, value) {
 export function loadSettings() {
   const saved = read('settings');
   const s = { ...DEFAULT_SETTINGS, ...(saved && typeof saved === 'object' ? saved : {}) };
-  if (s.mode !== 'scream' && s.mode !== 'classic') s.mode = DEFAULT_SETTINGS.mode;
+  if (!['plank', 'scream', 'classic'].includes(s.mode)) s.mode = DEFAULT_SETTINGS.mode;
   s.sensitivity = Number.isFinite(s.sensitivity) ? Math.min(2, Math.max(0.5, s.sensitivity)) : 1;
   s.sfx = Boolean(s.sfx);
   s.showMeter = s.showMeter !== false;

@@ -114,3 +114,26 @@ test('bird scores once per column and collides with column bodies, not gaps', ()
   assert.equal(obs.collectPassed(col.x + COLUMN_WIDTH + 1), 1);
   assert.equal(obs.collectPassed(col.x + COLUMN_WIDTH + 50), 0);
 });
+
+test('plank mode: flaps, wide fixed gaps, constant speed, and a finish line', () => {
+  const mode = MODES.plank;
+  assert.equal(mode.thrust, undefined, 'plank uses one flap per shout');
+  assert.ok(mode.winScore > 0);
+  const start = difficulty(mode, 0);
+  const late = difficulty(mode, 100);
+  assert.equal(start.gap, late.gap, 'gap never shrinks');
+  assert.equal(start.speed, late.speed, 'speed never ramps');
+  assert.ok(start.gap > MODES.classic.gapStart);
+  assert.ok(start.speed < MODES.classic.speedStart);
+
+  // One flap is enough to clear a sensible height, and it sinks gently.
+  const bird = createBird();
+  const y0 = bird.y;
+  stepBird(bird, { level: 1, flap: true }, mode, DT);
+  let top = bird.y;
+  for (let i = 0; i < 60; i++) {
+    stepBird(bird, { level: 0, flap: false }, mode, DT);
+    top = Math.min(top, bird.y);
+  }
+  assert.ok(y0 - top > 50, 'a flap lifts the bird');
+});

@@ -28,8 +28,11 @@ Add `?debug` to the URL to see live dB readings (noise floor, gate, peak, level)
 
 | Mode | How it works |
 |---|---|
-| **Scream** (default) | Hold a sound to rise. Volume sets how hard you climb; silence lets gravity win. A bit over half volume hovers. |
+| **Plank** (default) | The easy challenge mode. Each short shout is one flap, so you can breathe in between. Slow sinking, wide gaps, slow scrolling, no difficulty ramp. **Pass 10 pillars to win.** Only a tap leaves the win screen, so celebrating doesn't restart it. |
+| **Scream** | Hold a sound to rise. Volume sets how hard you climb; silence lets gravity win. A bit over half volume hovers. |
 | **Classic** | Each short shout is one flap. A long "AAAH" is one flap, not twenty. |
+
+Add `?mode=plank`, `?mode=scream` or `?mode=classic` to the URL to choose the mode from the link. The screen stays on while the game is open (where the browser supports it).
 
 Open **Settings** (gear button or `Esc`) to switch mode, change sensitivity, show or hide the volume meter, turn on sound effects, or recalibrate. The best score is saved separately for each mode.
 
